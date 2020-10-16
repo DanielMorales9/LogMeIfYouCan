@@ -32,7 +32,7 @@ public class KafkaStreamDataGenerator implements Runnable {
 
         BufferedReader reader;
         Long previousUnixTime = null;
-        int speedFactor = 100;
+        int speedFactor = 1000;
 
         try {
             reader = new BufferedReader(new FileReader(Constants.APP_LOG_FILE));
@@ -46,21 +46,22 @@ public class KafkaStreamDataGenerator implements Runnable {
                 Date result =  df.parse(eventTime);
                 long unixEventTime = result.getTime();
 
-                if (previousUnixTime == null) {
-                    previousUnixTime = unixEventTime;
+                long diffInMillis = 0;
+                if (previousUnixTime != null) {
+                    diffInMillis = unixEventTime - previousUnixTime;
+                    Thread.sleep(diffInMillis / speedFactor);
                 }
-
-                Thread.sleep((unixEventTime - previousUnixTime) / speedFactor);
+                previousUnixTime = unixEventTime;
 
                 ProducerRecord<String, String> record = new ProducerRecord<>(Constants.KAFKA_SOURCE_TOPIC, eventTime, line);
 
                 myProducer.send(record).get();
 
-
                 prettyPrint(line);
 
                 // read next line
                 line = reader.readLine();
+
             }
             reader.close();
 

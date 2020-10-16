@@ -9,5 +9,5 @@ public class Constants {
     public static final String ANSI_GREEN = "\u001B[32m";
     public static final String ANSI_PURPLE = "\u001B[35m";
     public static final String ANSI_BLUE = "\u001B[34m";
-    public static final String REGEX = "(\\d\\d\\d\\d-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d.\\d\\d\\dZ) +(\\d\\d\\d\\d-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d.\\d\\d\\d) +(\\S+) +(\\d+) --- \\[(\\S+)\\] +(\\S+) +: +(.*)";
+    public static final String LOG_REGEX = "(\\d\\d\\d\\d-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d.\\d\\d\\dZ) +(\\d\\d\\d\\d-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d.\\d\\d\\d) +(\\S+) +(\\d+) --- \\[(\\S+)\\] +(\\S+) +: +(.*)";
 }

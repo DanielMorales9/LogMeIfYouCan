@@ -1,4 +1,4 @@
-package com.logmeifyoucan;
+package com.logmeifyoucan.model;
 
 public class LogPoint {
 
@@ -18,6 +18,34 @@ public class LogPoint {
         this.thread = thread;
         this.className = className;
         this.msg = msg;
+    }
+
+    public Long getEvenTime() {
+        return evenTime;
+    }
+
+    public Long getLogTime() {
+        return logTime;
+    }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public String getLevel() {
+        return level;
+    }
+
+    public String getMsg() {
+        return msg;
+    }
+
+    public String getPid() {
+        return pid;
+    }
+
+    public String getThread() {
+        return thread;
     }
 
     @Override
