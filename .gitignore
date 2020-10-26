@@ -1,0 +1,6 @@
+.idea
+*iml
+data
+*log
+!logs/*
+.DS_STORE
