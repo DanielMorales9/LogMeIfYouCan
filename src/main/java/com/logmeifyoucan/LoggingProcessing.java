@@ -4,10 +4,12 @@ import com.logmeifyoucan.common.Constants;
 import com.logmeifyoucan.generator.KafkaStreamDataGenerator;
 import com.logmeifyoucan.model.LogPoint;
 import com.logmeifyoucan.model.PageRequest;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple4;
+import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.time.Time;
@@ -16,6 +18,7 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Properties;
@@ -32,6 +35,12 @@ public class LoggingProcessing {
 
             // Set up the streaming execution environment
             final StreamExecutionEnvironment streamEnv = StreamExecutionEnvironment.getExecutionEnvironment();
+            streamEnv.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+
+            WatermarkStrategy<LogPoint> generator =
+                    WatermarkStrategy.<LogPoint>forMonotonousTimestamps()
+                            .withTimestampAssigner((event, timestamp) -> event.getEvenTime())
+                            .withIdleness(Duration.ofMinutes(1));
 
             //Set connection properties to Kafka Cluster
             Properties properties = new Properties();
@@ -55,15 +64,15 @@ public class LoggingProcessing {
                     .map(s -> {
                         prettyPrint(s.toString());
                         return s;
-                    });
+                    })
+                    .assignTimestampsAndWatermarks(generator);
 
             // Compute the count of events, minimum timestamp and maximum timestamp
-            // for a sliding window interval of 5 minutes, sliding by 30 seconds
             DataStream<Tuple4<String, Integer, Long, Long>> countSummary = logPointStream
                     .map(logPoint -> new Tuple4<>
                             (String.valueOf(System.currentTimeMillis()), 1, logPoint.getLogTime(), logPoint.getLogTime()))
                     .returns(Types.TUPLE(Types.STRING, Types.INT, Types.LONG, Types.LONG))
-                    .timeWindowAll(Time.minutes(5), Time.seconds(30))
+                    .timeWindowAll(Time.minutes(5))
                     .reduce((x, y) -> new Tuple4<>(x.f0, x.f1 + y.f1, Math.min(x.f2, y.f2), Math.max(x.f3, y.f3)));
 
             // pretty print
@@ -76,7 +85,7 @@ public class LoggingProcessing {
 
                 System.out.println(Constants.ANSI_GREEN
                         + "Count Event Summary: "
-                        + (new Date()).toString()
+                        + "now=" + (new Date()).toString()
                         + ", Start Time: " + minTime
                         + ", End Time: " + maxTime
                         + ", Count: " + slidingSummary1.f1
@@ -99,7 +108,7 @@ public class LoggingProcessing {
                     .map(page -> new Tuple4<>(page.getPage(), 1, page.getDuration(), page.getDuration()))
                     .returns(Types.TUPLE(Types.STRING, Types.INT, Types.LONG, Types.LONG))
                     .keyBy(p -> p.f0)
-                    .timeWindow(Time.minutes(5), Time.seconds(30))
+                    .timeWindow(Time.minutes(5))
                     .reduce((x, y) -> new Tuple4<>(x.f0, x.f1 + y.f1, Math.min(x.f2, y.f2), Math.max(x.f3, y.f3)));
 
             pageLatencySummary.map((MapFunction<Tuple4<String, Integer, Long, Long>, Object>) summary -> {
