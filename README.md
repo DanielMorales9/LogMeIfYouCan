@@ -9,6 +9,8 @@ Real-Time Log Analysis with Kafka and Flink.
 - [x] Introduce Watermark technique for event-time processing
 - [ ] Join Log Stream from both Web Server and Application Server
 - [ ] Alert errors, anomaly or suspect trends to separate topics in Kafka
-- [ ] Load log events to ElasticCache   
-
+- [ ] Load log measurements to InfluxDB
+- [ ] Load log measurements to TimescaleDB    
+- [ ] Add Makefile for scripts
+- [ ] Add Docker Compose for systems
 
