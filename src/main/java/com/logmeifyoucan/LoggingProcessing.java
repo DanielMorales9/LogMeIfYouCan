@@ -1,7 +1,11 @@
 package com.logmeifyoucan;
 
 import com.logmeifyoucan.common.Constants;
+import com.logmeifyoucan.common.Parser;
 import com.logmeifyoucan.generator.KafkaStreamDataGenerator;
+import com.logmeifyoucan.helper.FlinkKafkaConsumerHelper;
+import com.logmeifyoucan.helper.StreamExecutionEnvHelper;
+import com.logmeifyoucan.helper.WatermarkStrategyHelper;
 import com.logmeifyoucan.model.LogPoint;
 import com.logmeifyoucan.model.PageRequest;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -34,22 +38,10 @@ public class LoggingProcessing {
         try {
 
             // Set up the streaming execution environment
-            final StreamExecutionEnvironment streamEnv = StreamExecutionEnvironment.getExecutionEnvironment();
-            streamEnv.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
-
-            WatermarkStrategy<LogPoint> generator =
-                    WatermarkStrategy.<LogPoint>forMonotonousTimestamps()
-                            .withTimestampAssigner((event, timestamp) -> event.getEvenTime())
-                            .withIdleness(Duration.ofMinutes(1));
-
-            //Set connection properties to Kafka Cluster
-            Properties properties = new Properties();
-            properties.setProperty("bootstrap.servers", "127.0.0.1:9092");
-            properties.setProperty("group.id", GROUP_ID);
+            final StreamExecutionEnvironment streamEnv = StreamExecutionEnvHelper.createStreamExecutionEnvironment();
 
             //Setup a Kafka Consumer on Flink
-            FlinkKafkaConsumer<String> kafkaConsumer =
-                    new FlinkKafkaConsumer<>(Constants.KAFKA_SOURCE_TOPIC, new SimpleStringSchema(), properties);
+            FlinkKafkaConsumer<String> kafkaConsumer = FlinkKafkaConsumerHelper.createConsumer();
 
             //Setup to receive only new messages
             kafkaConsumer.setStartFromLatest();
@@ -57,9 +49,11 @@ public class LoggingProcessing {
             //Create the data stream
             DataStream<String> logStream = streamEnv.addSource(kafkaConsumer);
 
+            WatermarkStrategy<LogPoint> generator = WatermarkStrategyHelper.createWatermarkStrategy();
+
             //Convert each record to an Object
             DataStream<LogPoint> logPointStream = logStream
-                    .map(LoggingProcessing::parseLogMessage)
+                    .map(Parser::parseLogMessage)
                     .filter(Objects::nonNull)
                     .map(s -> {
                         prettyPrint(s.toString());
@@ -97,7 +91,7 @@ public class LoggingProcessing {
 
             DataStream<PageRequest> pageRequestStream = logPointStream
                     .filter(logPoint -> logPoint.getMsg().matches("Method: .*Resource: .*Duration: .*"))
-                    .map(LoggingProcessing::parseLogPoint)
+                    .map(Parser::parseLogPoint)
                     .filter(p -> p != null)
                     .map(p -> {
                         prettyPrint(p.toString());
@@ -134,53 +128,6 @@ public class LoggingProcessing {
         catch(Exception e) {
             e.printStackTrace();
         }
-
-    }
-
-    private static PageRequest parseLogPoint(LogPoint logPoint) {
-        String actualLogMessage = logPoint.getMsg();
-
-        Pattern p = Pattern.compile("Method: (.*) Resource: (.*) Duration: (.*)");
-        Matcher m = p.matcher(actualLogMessage);
-
-        if (m.find() && m.groupCount() >= 3) {
-            String method = m.group(1);
-            String page = m.group(2);
-            Long duration = Long.valueOf(m.group(3));
-            return new PageRequest(logPoint.getEvenTime(), method, page, duration);
-        }
-        else {
-            prettyPrint("ERROR: " + actualLogMessage);
-            return null;
-        }
-    }
-
-    private static LogPoint parseLogMessage(String logMessage) throws ParseException {
-        Pattern p = Pattern.compile(Constants.LOG_REGEX);
-        Matcher m = p.matcher(logMessage);
-
-        if (m.find() && m.groupCount() >= 7) {
-            String logDate = m.group(1);
-            String eventDate = m.group(2);
-            String level = m.group(3);
-            String thread = m.group(4);
-            String pid = m.group(5);
-            String className = m.group(6);
-            String msg = m.group(7);
-
-            DateFormat df;
-            df = new SimpleDateFormat(Constants.SIMPLE_DATE_FORMAT);
-            long logTime = df.parse(logDate).getTime();
-            df = new SimpleDateFormat(Constants.SIMPLE_DATE_FORMAT2);
-            long eventTime = df.parse(eventDate).getTime();
-
-            return new LogPoint(logTime, eventTime, level, thread, pid, className, msg);
-        }
-        else {
-            prettyPrint("ERROR: " + logMessage);
-            return null;
-        }
-
 
     }
 
