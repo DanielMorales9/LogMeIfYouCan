@@ -12,4 +12,3 @@ Real-Time Log Analysis with Kafka and Flink.
 - [ ] Add Docker Compose
 - [ ] Join Log Stream from both Web Server and Application Server
 - [ ] Alert errors, anomaly or suspect trends to separate topics in Kafka
-
