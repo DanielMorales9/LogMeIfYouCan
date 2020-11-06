@@ -1,0 +1,26 @@
+apiVersion: 1
+datasources:
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    database: page_request
+    user: flink
+    password: flinkrocks
+    url: http://influxdb:8086
+    isDefault: true
+    editable: true
+
+  - name: TimescaleDB
+    type: postgres
+    url: timescaledb:5432
+    database: page_request
+    user: mor0004d
+    secureJsonData:
+      password: "password"
+    jsonData:
+      sslmode: "disable"
+      maxOpenConns: 0
+      maxIdleConns: 2
+      connMaxLifetime: 14400
+      postgresVersion: 1100
+      timescaledb: true
