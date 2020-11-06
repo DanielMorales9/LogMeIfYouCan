@@ -15,10 +15,12 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
+  "id": 2,
   "links": [],
   "panels": [
     {
-      "datasource": null,
+      "datasource": "TimescaleDB",
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "custom": {},
@@ -40,12 +42,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 0,
         "y": 0
       },
-      "id": 4,
+      "id": 6,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
@@ -63,48 +65,57 @@
       "pluginVersion": "7.3.1",
       "targets": [
         {
-          "groupBy": [
+          "format": "time_series",
+          "group": [
             {
               "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
+                "$__interval",
                 "previous"
               ],
-              "type": "fill"
+              "type": "time"
             }
           ],
-          "measurement": "page",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "SELECT count(\"duration\") FROM \"page\" WHERE $timeFilter GROUP BY time($interval) fill(0)",
-          "rawQuery": false,
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(event_time,$__interval,previous),\n  count(*)\nFROM measurements\nWHERE\n  $__timeFilter(event_time)\nGROUP BY 1\nORDER BY 1",
           "refId": "A",
-          "resultFormat": "time_series",
           "select": [
             [
               {
                 "params": [
                   "duration"
                 ],
-                "type": "field"
+                "type": "column"
               },
               {
-                "params": [],
-                "type": "count"
+                "params": [
+                  "avg"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "duration"
+                ],
+                "type": "alias"
               }
             ]
           ],
-          "tags": [],
-          "tz": "UTC"
+          "table": "measurements",
+          "timeColumn": "event_time",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Request count",
+      "title": "Request Count",
       "type": "stat"
     },
     {
@@ -112,7 +123,8 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": "TimescaleDB",
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -122,7 +134,7 @@
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 12,
         "y": 0
@@ -155,40 +167,52 @@
       "steppedLine": false,
       "targets": [
         {
-          "groupBy": [
+          "format": "time_series",
+          "group": [
             {
               "params": [
-                "1m"
+                "$__interval",
+                "previous"
               ],
               "type": "time"
-            },
-            {
-              "params": [
-                "0"
-              ],
-              "type": "fill"
             }
           ],
-          "measurement": "page",
-          "orderByTime": "ASC",
-          "policy": "default",
+          "metricColumn": "none",
+          "rawQuery": false,
+          "rawSql": "SELECT\n  $__timeGroupAlias(event_time,$__interval,previous),\n  avg(duration) AS \"duration\"\nFROM measurements\nWHERE\n  $__timeFilter(event_time)\nGROUP BY 1\nORDER BY 1",
           "refId": "A",
-          "resultFormat": "time_series",
           "select": [
             [
               {
                 "params": [
                   "duration"
                 ],
-                "type": "field"
+                "type": "column"
               },
               {
-                "params": [],
-                "type": "mean"
+                "params": [
+                  "avg"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "duration"
+                ],
+                "type": "alias"
               }
             ]
           ],
-          "tags": []
+          "table": "measurements",
+          "timeColumn": "event_time",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
         }
       ],
       "thresholds": [],
@@ -237,40 +261,23 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "InfluxDB",
+      "datasource": "TimescaleDB",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null,
-            "filterable": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
+          "custom": {}
         },
         "overrides": []
       },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
-        "h": 13,
+        "h": 8,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 9
       },
       "hiddenSeries": false,
-      "id": 7,
+      "id": 5,
       "legend": {
         "avg": false,
         "current": false,
@@ -297,51 +304,65 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "",
-          "groupBy": [
+          "format": "time_series",
+          "group": [
             {
               "params": [
-                "$__interval"
+                "$__interval",
+                "none"
               ],
               "type": "time"
             },
             {
               "params": [
-                "null"
+                "page"
               ],
-              "type": "fill"
+              "type": "column"
             }
           ],
-          "hide": false,
-          "measurement": "page",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "SELECT mean(\"duration\") as latency FROM \"page\" WHERE $timeFilter GROUP BY method, time(1m) fill(0)",
+          "metricColumn": "none",
           "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(event_time,$__interval),\n  method,\n  avg(duration) AS \"duration\"\nFROM measurements\nWHERE\n  $__timeFilter(event_time)\nGROUP BY 1, method\nORDER BY 1",
           "refId": "A",
-          "resultFormat": "time_series",
           "select": [
             [
               {
                 "params": [
-                  "value"
+                  "duration"
                 ],
-                "type": "field"
+                "type": "column"
               },
               {
-                "params": [],
-                "type": "mean"
+                "params": [
+                  "avg"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "duration"
+                ],
+                "type": "alias"
               }
             ]
           ],
-          "tags": []
+          "table": "measurements",
+          "timeColumn": "event_time",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Latency Breakdown by Method",
+      "title": "Latency by Method",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -383,40 +404,23 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "InfluxDB",
+      "datasource": "TimescaleDB",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null,
-            "filterable": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
+          "custom": {}
         },
         "overrides": []
       },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
-        "h": 13,
+        "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 9
       },
       "hiddenSeries": false,
-      "id": 6,
+      "id": 4,
       "legend": {
         "avg": false,
         "current": false,
@@ -443,51 +447,65 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "",
-          "groupBy": [
+          "format": "time_series",
+          "group": [
             {
               "params": [
-                "$__interval"
+                "$__interval",
+                "none"
               ],
               "type": "time"
             },
             {
               "params": [
-                "null"
+                "page"
               ],
-              "type": "fill"
+              "type": "column"
             }
           ],
-          "hide": false,
-          "measurement": "page",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "SELECT mean(\"duration\") as latency FROM \"page\" WHERE $timeFilter GROUP BY page, time(1m) fill(0)",
+          "metricColumn": "none",
           "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(event_time,$__interval),\n  page,\n  avg(duration) AS \"duration\"\nFROM measurements\nWHERE\n  $__timeFilter(event_time)\nGROUP BY 1, page\nORDER BY 1",
           "refId": "A",
-          "resultFormat": "time_series",
           "select": [
             [
               {
                 "params": [
-                  "value"
+                  "duration"
                 ],
-                "type": "field"
+                "type": "column"
               },
               {
-                "params": [],
-                "type": "mean"
+                "params": [
+                  "avg"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "duration"
+                ],
+                "type": "alias"
               }
             ]
           ],
-          "tags": []
+          "table": "measurements",
+          "timeColumn": "event_time",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Latency Breakdown by Page",
+      "title": "Latency by Page",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -525,7 +543,7 @@
       }
     }
   ],
-  "refresh": false,
+  "refresh": "5s",
   "schemaVersion": 26,
   "style": "dark",
   "tags": [],
@@ -534,11 +552,11 @@
   },
   "time": {
     "from": "now-40d",
-    "to": "now-30d"
+    "to": "now-20d"
   },
   "timepicker": {},
   "timezone": "",
-  "title": "influxdb",
-  "uid": "M9aDyOhMz",
-  "version": 2
+  "title": "TimescaleDB",
+  "uid": "l5HEIAhGz",
+  "version": 4
 }
