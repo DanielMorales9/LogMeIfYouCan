@@ -14,9 +14,9 @@ datasources:
     type: postgres
     url: timescaledb:5432
     database: page_request
-    user: mor0004d
+    user: flink
     secureJsonData:
-      password: "password"
+      password: "flinkrocks"
     jsonData:
       sslmode: "disable"
       maxOpenConns: 0

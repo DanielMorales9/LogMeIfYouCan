@@ -1,9 +1,9 @@
 .idea
 *iml
-data
+data/
 *log
 !logs/*
 .DS_STORE
-target
+target/
 .envrc
-dockerdata
+dockerdata/

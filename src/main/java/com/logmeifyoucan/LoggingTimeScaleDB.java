@@ -19,8 +19,8 @@ import java.util.Objects;
 public class LoggingTimeScaleDB {
 
     private static final String URL = "jdbc:postgresql://localhost:5432/page_request";
-    private static final String USERNAME = "mor0004d";
-    private static final String PASSWORD = "password";
+    private static final String USERNAME = "flink";
+    private static final String PASSWORD = "flinkrocks";
 
     public static void main(String[] args) {
 
@@ -63,7 +63,7 @@ public class LoggingTimeScaleDB {
                     },
                     new JdbcExecutionOptions.Builder()
                             .withBatchIntervalMs(10L)
-                            .withBatchIntervalMs(1000)
+                            .withBatchSize(1000)
                             .withMaxRetries(1)
                             .build(),
                     new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
