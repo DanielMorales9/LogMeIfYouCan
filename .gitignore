@@ -5,3 +5,5 @@ data
 !logs/*
 .DS_STORE
 target
+.envrc
+dockerdata
